@@ -10,11 +10,13 @@ class UserRegisterView(APIView):
         serializer = userRegisterSerializer(data= request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({'message': "User registerd successfully."})
+            return Response({'message': "User registerd successfully.",
+                             'user': serializer.data
+                             })
         return Response(serializer.errors)
     
 class UserListView(APIView):
     def get(self, request, *args, **kwargs):
-        queryset = User.objects.all()  # Fetch all User objects
-        serializer = UserSerializer(queryset, many=True)  # Serialize the data
+        data = User.objects.all()  # Fetch all User objects
+        serializer = UserSerializer(data, many=True)  # Serialize the data
         return Response(serializer.data)

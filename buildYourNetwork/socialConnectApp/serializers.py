@@ -17,6 +17,15 @@ class userRegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validateData)
         return user
     
+    def to_representation(self, instance):
+        # Get the default representation
+        representation = super().to_representation(instance)
+        
+        # Remove the password field from the response
+        representation.pop('password', None)  # This will exclude the password field
+        
+        return representation
+    
 class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
