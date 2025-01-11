@@ -1,14 +1,8 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 # Create your models here.
 
 from django.db import models
-
-class User(models.Model):
-    name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
 
 class Follower(models.Model):
     follower = models.ForeignKey(User, related_name="following", on_delete=models.CASCADE)
