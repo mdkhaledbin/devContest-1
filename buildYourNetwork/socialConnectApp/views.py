@@ -48,19 +48,22 @@ class loginView(APIView):
                                 'access_token': generate_access_token(user),
                                 'refresh_token': generate_refresh_token(user)
                              })
-            response.set_cookie('refresh_token', generate_refresh_token(user), httponly=True)
-            response.set_cookie('access_token', generate_access_token(user), httponly=True)
+            # response.set_cookie('refresh_token', generate_refresh_token(user), httponly=True)
+            # response.set_cookie('access_token', generate_access_token(user), httponly=True)
             return response
         return Response({'message': "Invalid credentials."})
     
 # from rest_framework.permissions import IsAuthenticated
-@method_decorator(csrf_exempt, name='dispatch')
+# @method_decorator(csrf_exempt, name='dispatch')
 class logoutView(APIView):
-    # permission_classes = [IsAuthenticated]
-
+    
     def post(self, request):
+        # authentication_classes = [request.COOKIES['access_token','sessionid']]
+        # permission_classes = [IsAuthenticated]
+        print('logoutView')
         logout(request)
         response = Response({'message': 'Logged out successfully'})
-        response.delete_cookie('refresh_token')
-        response.delete_cookie('access_token')
+        # response.delete_cookie('refresh_token')
+        # response.delete_cookie('access_token')
+        # response.delete_cookie('sessionid')
         return response
