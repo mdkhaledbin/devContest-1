@@ -1,6 +1,11 @@
 import jwt
 import datetime 
 from rest_framework import exceptions
+from rest_framework.permissions import BasePermission
+
+class IsAuthenticatedCustom(BasePermission):
+    def has_permission(self, request, view):
+        return request.user is not None and request.user.is_authenticated
 
 def generate_access_token(user):
     payload = {

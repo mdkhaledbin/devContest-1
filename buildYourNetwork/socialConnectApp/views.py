@@ -3,12 +3,10 @@ from rest_framework.response import Response
 from rest_framework import generics
 from .serializers import userRegisterSerializer, UserSerializer
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
-from rest_framework.permissions import IsAuthenticated
-from .authentication import generate_access_token, generate_refresh_token
+from django.contrib.auth import authenticate
+from .authentication import generate_access_token, generate_refresh_token, decode_access_token, decode_refresh_token, IsAuthenticatedCustom
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from .permission import JWTAuthentication
 # Create your views here.
 
 class UserRegisterView(APIView):
@@ -22,14 +20,17 @@ class UserRegisterView(APIView):
         return Response(serializer.errors)
     
 
-class UserListView(LoginRequiredMixin, APIView):
-    permission_classes = [IsAuthenticated]
+class UserListView( APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
     def get(self, request, *args, **kwargs):
         data = User.objects.all()  # Fetch all User objects
         serializer = UserSerializer(data, many=True)  # Serialize the data
         return Response(serializer.data)
 
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
     def get(self, request, *args, **kwargs):
         user_id = self.kwargs.get('user_id')
         queryset = User.objects.get(id=user_id)
@@ -41,29 +42,26 @@ class loginView(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
+
         if user:
-            login(request, user)
             response =  Response({'message': "Login successful.",
                              'user': UserSerializer(user).data,
                                 'access_token': generate_access_token(user),
                                 'refresh_token': generate_refresh_token(user)
                              })
-            # response.set_cookie('refresh_token', generate_refresh_token(user), httponly=True)
-            # response.set_cookie('access_token', generate_access_token(user), httponly=True)
+            response.set_cookie('refresh_token', generate_refresh_token(user), httponly=True)
+            response.set_cookie('access_token', generate_access_token(user), httponly=True)
             return response
         return Response({'message': "Invalid credentials."})
-    
-# from rest_framework.permissions import IsAuthenticated
-# @method_decorator(csrf_exempt, name='dispatch')
+
 class logoutView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
     
     def post(self, request):
-        # authentication_classes = [request.COOKIES['access_token','sessionid']]
-        # permission_classes = [IsAuthenticated]
         print('logoutView')
-        logout(request)
         response = Response({'message': 'Logged out successfully'})
-        # response.delete_cookie('refresh_token')
-        # response.delete_cookie('access_token')
-        # response.delete_cookie('sessionid')
+        response.delete_cookie('refresh_token')
+        response.delete_cookie('access_token')
         return response
+    
