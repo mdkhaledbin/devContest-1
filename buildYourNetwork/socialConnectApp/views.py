@@ -1,14 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response 
 from rest_framework import generics, status
-from .serializers import userRegisterSerializer, UserSerializer, FolloweSerializer
+from .serializers import userRegisterSerializer, UserSerializer, FolloweSerializer, BlockSerializer
 from django.contrib.auth import authenticate
 from .authentication import generate_access_token, generate_refresh_token, decode_access_token, decode_refresh_token, IsAuthenticatedCustom
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .permission import JWTAuthentication
 
 from django.contrib.auth.models import User
-from .models import Follower
+from .models import Follower, Blocked
 # Create your views here.
 
 class UserRegisterView(APIView):
@@ -21,7 +21,6 @@ class UserRegisterView(APIView):
                              })
         return Response(serializer.errors)
     
-
 class UserListView( APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticatedCustom]
@@ -130,6 +129,52 @@ class UnfollowView(APIView):
         except:
             return Response({'message':f"you {request.user}, are not authenticated to unfollow {user_id} number user.2"}, status=status.HTTP_400_BAD_REQUEST)
         
-    
+class BlockView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def post(self, request, user_id):
+        try:
+            blocker = request.user
+            blocked = User.objects.get(id=user_id)
+            if(blocker == blocked):
+                return Response({"error": "You cannot block yourself"}, status=status.HTTP_400_BAD_REQUEST)
+            # print(blocker.email)
+            # print(blocked.email)
+            try:
+                block_instance = Blocked.objects.get_or_create(blocker=blocker, blocked = blocked)
+                # print(block_instance)
+            except Exception as e:
+                # print(e)
+                return Response({'message':"error occured"}, status=status.HTTP_400_BAD_REQUEST)
             
-        
+            return Response({'message':f"you {request.user}, have blocked {user_id} number user."}, status=status.HTTP_200_OK)
+        except:
+            return Response({'message':f"you {request.user}, are not authenticated to block {user_id} number user."}, status=status.HTTP_400_BAD_REQUEST)
+
+class UnblockView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def post(self, request, user_id):
+        try:
+            blocker = request.user
+            blocked = User.objects.get(id=user_id)
+            block_instance = Blocked.objects.filter(blocker=blocker, blocked = blocked)
+            if block_instance.exists():
+                block_instance.delete()
+                return Response({'message':f"you {request.user}, have unblocked {user_id} number user."}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message':f"you {request.user}, are not authenticated to unblock {user_id} number user.1"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'message':f"you {request.user}, are not authenticated to unblock {user_id} number user.2"}, status=status.HTTP_400_BAD_REQUEST)
+
+class BlockedUsersListView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def get(self, request):
+        try:
+            user = request.user
+            blocked_users = user.blocked_users.all()
+            blocked_users=BlockSerializer(blocked_users, many=True)
+            return Response({"me": request.user.id, "blocked_users": list(blocked_users.data)}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
