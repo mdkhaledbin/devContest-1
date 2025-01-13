@@ -207,3 +207,22 @@ class PostFeedView(APIView):
         
 class LikeView(APIView):
     pass
+
+class RefreshTokensView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'error': 'Token not found'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user_id = decode_refresh_token(refresh_token)
+        except Exception as e:
+            return Response({'error': 'Token is invalid'}, status=status.HTTP_400_BAD_REQUEST)
+        user = User.objects.get(id=user_id)
+        access_token = generate_access_token(user)
+        refresh_token = generate_refresh_token(user)
+        response = Response({"message": "Tokens are refreshed.",'access_token': access_token, 'refresh_token': refresh_token}, status=status.HTTP_200_OK)
+        # response.delete_cookie('refresh_token')
+        # response.delete_cookie('access_token')
+        response.set_cookie('refresh_token', refresh_token, httponly=True)
+        response.set_cookie('access_token', access_token, httponly=True)
+        return response

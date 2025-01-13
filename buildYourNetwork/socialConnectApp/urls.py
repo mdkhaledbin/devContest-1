@@ -3,7 +3,7 @@ from .models import User
 from .views import UserRegisterView, UserListView, UserDetailView, loginView
 from .views import logoutView, FollowView, FollowersListView, FollowingListView
 from .views import UnfollowView, BlockView, UnblockView, BlockedUsersListView, PostView
-from .views import PostFeedView
+from .views import PostFeedView, RefreshTokensView
 
 urlpatterns = [
     path('register/', UserRegisterView.as_view(), name = 'register'),
@@ -23,4 +23,6 @@ urlpatterns = [
     # for post
     path('post/', PostView.as_view(), name='post'),
     path('feed/', PostFeedView.as_view(), name='feed'),
+    # for refresh token
+    path('refresh-tokens/', RefreshTokensView.as_view(), name='refresh-tokens'),
 ]
