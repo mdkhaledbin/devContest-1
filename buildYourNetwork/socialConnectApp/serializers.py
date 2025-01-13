@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import Follower
 
 class userRegisterSerializer(serializers.ModelSerializer):
     password2=serializers.CharField(write_only=True)
@@ -32,4 +33,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email']
         
+class FolloweSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follower
+        fields = ['id', 'follower', 'following']
         

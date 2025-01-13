@@ -11,7 +11,7 @@ class JWTAuthentication(BaseAuthentication):
             return None
 
         try:
-            print(token)
+            # print(token)
             user_id = decode_access_token(token)
             user = User.objects.get(id=user_id)
             return (user, None)  # Return user and token

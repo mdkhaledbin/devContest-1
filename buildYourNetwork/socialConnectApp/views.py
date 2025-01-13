@@ -1,12 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response 
-from rest_framework import generics
-from .serializers import userRegisterSerializer, UserSerializer
-from django.contrib.auth.models import User
+from rest_framework import generics, status
+from .serializers import userRegisterSerializer, UserSerializer, FolloweSerializer
 from django.contrib.auth import authenticate
 from .authentication import generate_access_token, generate_refresh_token, decode_access_token, decode_refresh_token, IsAuthenticatedCustom
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .permission import JWTAuthentication
+
+from django.contrib.auth.models import User
+from .models import Follower
 # Create your views here.
 
 class UserRegisterView(APIView):
@@ -65,3 +67,54 @@ class logoutView(APIView):
         response.delete_cookie('access_token')
         return response
     
+class FollowView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
+    def post(self, request, user_id):
+        follower = request.user
+        try:
+            following = User.objects.get(id = user_id)
+            if(follower == following):
+                return Response({"error": "You cannot follow yourself"}, status=status.HTTP_400_BAD_REQUEST)
+            created = Follower.objects.get_or_create(follower=follower, following=following)
+            # if created:
+            #     print(created)
+            return Response({"message": f"You are now following {following.username}"}, status=status.HTTP_201_CREATED)
+        except:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+class FollowersListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
+    
+    def get(self, request, user_id):
+        try: 
+            user = User.objects.get(id = user_id)
+            print(user)
+            follower = user.followers.all()
+            follower=FolloweSerializer(follower, many=True)
+            print(follower.data)
+
+            return Response({"me": request.user.id, "followers": list(follower.data)}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+class FollowingListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticatedCustom]
+    
+    def get(self, request, user_id):
+        try: 
+            user = User.objects.get(id = user_id)
+            print(user)
+            following = user.following.all()
+            
+            following=FolloweSerializer(following, many=True)
+            print(following.data)
+            return Response({"me": request.user.id, "following": list(following.data)}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": f"{user.username} not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+    
+            
+        
