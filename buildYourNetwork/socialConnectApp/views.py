@@ -114,7 +114,22 @@ class FollowingListView(APIView):
         except:
             return Response({"error": f"{user.username} not found"}, status=status.HTTP_404_NOT_FOUND)
         
-
+class UnfollowView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def post(self, request, user_id):
+        try:
+            follower = request.user
+            following = User.objects.get(id=user_id)
+            follow_instance = Follower.objects.filter(follower=follower, following = following)
+            if follow_instance.exists():
+                follow_instance.delete()
+                return Response({'message':f"you {request.user}, have unfollow {user_id} number user."}, status=status.HTTP_200_OK)
+            else:
+                return Response({'message':f"you {request.user}, are not authenticated to unfollow {user_id} number user.1"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'message':f"you {request.user}, are not authenticated to unfollow {user_id} number user.2"}, status=status.HTTP_400_BAD_REQUEST)
+        
     
             
         
