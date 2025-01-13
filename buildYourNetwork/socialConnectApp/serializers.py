@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Follower, Blocked
+from .models import Follower, Blocked, Post, Like
 
 class userRegisterSerializer(serializers.ModelSerializer):
     password2=serializers.CharField(write_only=True)
@@ -42,4 +42,9 @@ class BlockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Blocked
         fields = ['id', 'blocker', 'blocked']
+              
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = ['id', 'user', 'content']
         

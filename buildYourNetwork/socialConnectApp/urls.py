@@ -1,6 +1,9 @@
 from django.urls import path
 from .models import User
-from .views import UserRegisterView, UserListView, UserDetailView, loginView, logoutView, FollowView, FollowersListView, FollowingListView, UnfollowView, BlockView, UnblockView, BlockedUsersListView
+from .views import UserRegisterView, UserListView, UserDetailView, loginView
+from .views import logoutView, FollowView, FollowersListView, FollowingListView
+from .views import UnfollowView, BlockView, UnblockView, BlockedUsersListView, PostView
+from .views import PostFeedView
 
 urlpatterns = [
     path('register/', UserRegisterView.as_view(), name = 'register'),
@@ -17,5 +20,7 @@ urlpatterns = [
     path('block/<int:user_id>/', BlockView.as_view(), name='block'),
     path('unblock/<int:user_id>/', UnblockView.as_view(), name='unblock'),
     path('blocked-users', BlockedUsersListView.as_view(), name='blocked-users'),
-    
+    # for post
+    path('post/', PostView.as_view(), name='post'),
+    path('feed/', PostFeedView.as_view(), name='feed'),
 ]

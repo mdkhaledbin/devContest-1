@@ -1,14 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response 
 from rest_framework import generics, status
-from .serializers import userRegisterSerializer, UserSerializer, FolloweSerializer, BlockSerializer
+from .serializers import userRegisterSerializer, UserSerializer, FolloweSerializer, BlockSerializer, PostSerializer
 from django.contrib.auth import authenticate
 from .authentication import generate_access_token, generate_refresh_token, decode_access_token, decode_refresh_token, IsAuthenticatedCustom
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .permission import JWTAuthentication
 
 from django.contrib.auth.models import User
-from .models import Follower, Blocked
+from .models import Follower, Blocked, Post, Like
 # Create your views here.
 
 class UserRegisterView(APIView):
@@ -178,3 +178,32 @@ class BlockedUsersListView(APIView):
             return Response({"me": request.user.id, "blocked_users": list(blocked_users.data)}, status=status.HTTP_200_OK)
         except:
             return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class PostView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def post(self, request):
+        try:
+            user = request.user
+            content = request.data.get('content')
+            post = Post.objects.create(user=user, content=content)
+            return Response({'message': 'Post created successfully.'}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'message': 'Post creation failed', 'error': f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+class PostFeedView(APIView):
+    authentication_classes=[JWTAuthentication]
+    permission_classes=[IsAuthenticatedCustom]
+    def get(self, request):
+        try:
+            user = request.user
+            following_user = [f.follower for f in user.following.all()]
+            userToFetch = following_user + [user]
+            print(userToFetch)
+            posts = Post.objects.filter(user__in=userToFetch).distinct()
+            return Response({'posts': PostSerializer(posts, many=True).data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'message': 'Post feed failed', 'error': f"{e}"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class LikeView(APIView):
+    pass
